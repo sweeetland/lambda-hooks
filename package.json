@@ -8,6 +8,7 @@
         "dist"
     ],
     "scripts": {
+        "test": "echo \"No test specified\"",
         "release": "np",
         "build": "rm -rf dist && tsc",
         "prepare": "npm run build"
