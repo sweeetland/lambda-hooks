@@ -7,8 +7,7 @@
         "sourceMap": true,
         "noImplicitReturns": false,
         "strict": true,
-        "outDir": "dist"
-    },
-    "include": ["src"],
-    "compileOnSave": true
+        "outDir": "dist",
+        "rootDir": "src"
+    }
 }

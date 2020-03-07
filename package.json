@@ -2,10 +2,10 @@
     "name": "lambda-hooks",
     "version": "0.0.6",
     "description": "Super simple lightweight hooks to avoid repeated logic in your lambda functions",
-    "main": "dist/src",
-    "types": "dist/src",
+    "main": "dist",
+    "types": "dist",
     "files": [
-        "dist/src"
+        "dist"
     ],
     "scripts": {
         "test": "echo \"No test specified\"",
