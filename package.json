@@ -2,9 +2,15 @@
     "name": "lambda-hooks",
     "version": "0.0.2",
     "description": "Super simple lightweight hooks to avoid repeated logic in your lambda functions",
-    "main": "build/index.js",
+    "main": "dist",
+    "types": "dist",
+    "files": [
+        "dist"
+    ],
     "scripts": {
-        "test": "echo \"No test specified\""
+        "release": "np",
+        "build": "rm -rf dist && tsc",
+        "prepare": "npm run build"
     },
     "keywords": [
         "lambda",
@@ -31,5 +37,8 @@
         "eslint-plugin-prettier": "^3.1.2",
         "prettier": "^1.19.1",
         "typescript": "^3.8.3"
+    },
+    "dependencies": {
+        "got": "^10.6.0"
     }
 }

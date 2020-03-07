@@ -1,7 +1,6 @@
 import { ObjectSchema } from 'yup'
 
 import { HookCreator } from '../index'
-import { BAD_REQUEST } from '../utils/response'
 
 interface Config {
     requestSchema: ObjectSchema
@@ -18,7 +17,7 @@ export const validateEventBody: HookCreator<Config> = config => async state => {
         console.log(`yup error validating body: ${error}`)
 
         state.exit = true
-        state.response = BAD_REQUEST(error.message)
+        state.response = { statusCode: 400, body: JSON.stringify({ error: error.message }) }
     }
 
     return state
