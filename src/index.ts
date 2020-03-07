@@ -1,5 +1,13 @@
 import { Context } from 'aws-lambda'
 
+export {
+    handleScheduledEvent,
+    handleUnexpectedError,
+    logEvent,
+    parseEvent,
+    validateEventBody,
+} from './hooks'
+
 interface Hooks {
     before?: HookHandler[]
     after?: HookHandler[]
