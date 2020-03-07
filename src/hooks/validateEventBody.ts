@@ -7,6 +7,8 @@ interface Config {
 }
 
 export const validateEventBody: HookCreator<Config> = config => async state => {
+    if (!config) throw Error('missing required config for validation')
+
     try {
         const { event } = state
 

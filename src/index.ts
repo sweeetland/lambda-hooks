@@ -17,7 +17,7 @@ interface State {
     error?: Error
 }
 
-export type HookCreator<Config = {}> = (config: Config) => HookHandler
+export type HookCreator<Config = {}> = (config?: Config) => HookHandler
 type HookHandler = (state: State) => Promise<State>
 
 type UseHooks = (hooks: Hooks) => ApplyHooks
