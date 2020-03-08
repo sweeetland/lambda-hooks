@@ -1,6 +1,6 @@
 {
     "name": "lambda-hooks",
-    "version": "0.0.8",
+    "version": "0.0.9",
     "description": "Super simple lightweight hooks to avoid repeated logic in your lambda functions",
     "main": "dist",
     "types": "dist",
