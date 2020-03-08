@@ -2,40 +2,38 @@
 
 **Super lightweight module to _hook_ into the execution of your Node.js lambda functions**
 
-Lambda Hooks helps avoid repeated logic in your lambda functions. Use some of the provided hooks or easily create your own (they are just functions). They can be executed before, after or when an unhandled error occurs.
+Lambda Hooks help avoid repeated logic in your lambda functions. Use some of the provided hooks or easily create your own. They are just functions that can be executed before, after or when an unhandled error occurs.
 
-## Features
+## Principles
 
--   Minimal and fast (~40 lines of code)
--   Simple to use
--   Easily create your own hooks using modern syntax (async await)
--   First class support for TypeScript
+-   Zero dependancies
+-   Fast & simple to use
+-   First class support for TypeScript & modern JS
 
 ## Example
 
 ```javascript
-const  useHooks, {handleScheduledEvent, logEvent, parseEvent, handleUnexpectedError} = require('lambda-hooks')
+const  useHooks, {logEvent, parseEvent, handleUnexpectedError} = require('lambda-hooks')
 
-// call useHooks with the hooks to decorate your lambda with
+// call useHooks with hooks to decorate your lambda with
 const  applyHooks = useHooks({
-	before: [handleScheduledEvent(), logEvent(), parseEvent()],
+	before: [logEvent(), parseEvent()],
 	after: [],
 	onError: [handleUnexpectedError()]
 })
 
-// must be an async lambda!
+// must be an async lambda
 const  handler = async (event, context) => {
-	// write your lambda function as normal...
+	// your lambda function...
 }
 
-// call applyHooks passing in your lambda function & it
-// returns your lambda decorated with the hooks specified above
-module.exports = applyHooks(handler)
+// call applyHooks passing in your lambda function
+exports.handler = applyHooks(handler)
 ```
 
-## Installing
+## Install
 
-Using npm run:
+Using npm:
 
 ```bash
 npm install lambda-hooks
@@ -45,4 +43,112 @@ or with yarn:
 
 ```bash
 yarn add lambda-hooks
+```
+
+_TypeScript types are included_ 🧰
+
+## Usage
+
+1. Import the package
+
+```javascript
+const useHooks = require('lambda-hooks')
+```
+
+2. Call useHooks with the hooks that you want to use. There's 3 types of hooks that are executed either before the lambda execution, after or if an error occurs.
+
+    Note that the order of the hooks matters, they are executed one by one from the first element in the before array.
+
+    Also, notice that we are invoking the functions as they are passed in, this is deliberate and will make more sense when we get to a more complex example.
+
+```javascript
+const applyHooks = useHooks({
+    before: [logEvent(), parseEvent()],
+    after: [],
+    onError: [handleUnexpectedError()],
+})
+```
+
+3. useHooks returns a function applyHooks. Pass your **async** lambda into the applyHooks function to decorate your lambda. Export as normal.
+
+```javascript
+const  handler = async (event, context) => {...}
+
+exports.handler = applyHooks(handler)
+```
+
+## Hooks
+
+Let's start with a simple example of a hook that logs the event
+
+```javascript
+export const logEvent = () => async state => {
+    console.log(`received event: ${state.event}`)
+
+    return state
+}
+```
+
+Notice that there's two functions here, the first returning the second. The first function is the HookCreator and the second is the HookHandler. We'll get to why in a moment.
+
+For now, let's focus on the second function the HookHandler. This function **receives and returns** a state object that looks like this:
+
+```typescript
+interface State {
+    event: Event // AWS lambda event
+    context: Context // AWS lambda context
+    exit: boolean // Set to true to quit execution early
+    response?: Response // This will contain the response from your lambda after it has been executed. Also this will be returned when exit is true
+    error?: Error // If there's an unhandled exception, it will be attached here & your onError handlers will be invoked
+}
+```
+
+You can write hooks to manipulate the event before it reaches your lambda functions. For example, when writing lambdas that sit behind an API often you need to parse the event body. Let's do exactly that:
+
+```javascript
+export const parseEventBody = () => async state => {
+    const { event } = state
+
+    if (typeof event.body === 'string') {
+        state.event.body = JSON.parse(event.body)
+    }
+
+    return state
+}
+```
+
+Ok you get the gist, now it's time for a more complex example. Again. when creating lambdas that sit behind a rest API, it's a good idea to validate the event body (assuming this hasn't already been done by API gateway).
+
+```javascript
+export const validateEventBody = config => async state => {
+    if (!config || config.schema) {
+        throw Error('missing required requestSchema for validation')
+    }
+
+    try {
+        const { event } = state
+
+        await config.schema.validate(event.body, { strict: true })
+
+        console.log(`yup body passed validation: ${event.body}`)
+    } catch (error) {
+        console.log(`yup error validating body: ${error}`)
+
+        state.exit = true
+
+        state.response = { statusCode: 400, body: JSON.stringify({ error: error.message }) }
+    }
+
+    return state
+}
+```
+
+Here we are utilising at library called yup for validation. Usually validation libraries need a schema to validate against, but how do we have access to the schema in the hook?
+
+That's why we have the first function in the hook, the HookCreator. This is to pass in anything that the hooks needs that isn't already on the state object. For this to work though, we need to pass in the schema to the HookCreator as we invoke useHooks. Like so:
+
+```javascript
+const applyHooks = useHooks({
+    before: [logEvent(), parseEvent(), validateEventBody({ schema })],
+})
 ```
