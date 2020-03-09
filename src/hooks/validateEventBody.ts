@@ -1,6 +1,6 @@
 import { ObjectSchema } from 'yup'
 
-import { HookCreator } from '../types/hooks'
+import { HookCreator } from '../index'
 
 interface Config {
     requestSchema: ObjectSchema
