@@ -1,4 +1,4 @@
-import { Context } from 'aws-lambda';
+import { Context } from 'aws-lambda'
 
 export {
     handleScheduledEvent,
@@ -41,17 +41,17 @@ export type HookCreator<Config = {}> = (config?: Config) => HookHandler
  */
 type HookHandler = (state: State) => Promise<State>
 
-type UseHooks = (hooks: Hooks) => ApplyHooks
-type ApplyHooks = (lambda: any) => (event: any, context: Context) => Promise<any>
+type UseHooks = (hooks: Hooks) => WithHooks
+type WithHooks = (lambda: any) => (event: any, context: Context) => Promise<any>
 /**
- * Using the provided hooks create an applyHooks higher order function
+ * Using the provided hooks create an withHooks higher order function
  * @param hooks a config object of the hooks to apply to your lambda
  * @param hooks.before an array of hooks to run before the provided lambda
  * @param hooks.after an array of hooks to run after the provided lambda
  * @param hooks.onError an array of hooks to run only if there's an error during the execution
- * @returns ApplyHooks() function that wraps around your lambda
+ * @returns WithHooks() function that wraps around your lambda
  */
-export const useHooks: UseHooks = (hooks: Hooks): ApplyHooks => {
+export const useHooks: UseHooks = (hooks: Hooks): WithHooks => {
     if (!hooks.before) hooks.before = []
     if (!hooks.after) hooks.after = []
     if (!hooks.onError) hooks.onError = []
@@ -62,7 +62,7 @@ export const useHooks: UseHooks = (hooks: Hooks): ApplyHooks => {
      * @param lambda lambda function
      * @returns supercharged lambda  🚀
      */
-    const applyHooks = (lambda: any) => async (event: Event, context: Context) => {
+    const withHooks = (lambda: any) => async (event: Event, context: Context) => {
         let state: State = { event, context, exit: false }
 
         try {
@@ -93,7 +93,7 @@ export const useHooks: UseHooks = (hooks: Hooks): ApplyHooks => {
         return state.response
     }
 
-    return applyHooks
+    return withHooks
 }
 
 export default useHooks

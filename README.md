@@ -1,4 +1,4 @@
-# lambda-hooks ɧ
+# lambda-hooks ⚓️
 
 **Super lightweight module to _hook_ into the execution of your Node.js lambda functions**
 
@@ -13,21 +13,21 @@ Lambda Hooks help avoid repeated logic in your lambda functions. Use some of the
 ## Example
 
 ```javascript
-const  useHooks, {logEvent, parseEvent, handleUnexpectedError} = require('lambda-hooks')
+const useHooks, {logEvent, parseEvent, handleUnexpectedError} = require('lambda-hooks')
 
 // call useHooks with hooks to decorate your lambda with
-const  applyHooks = useHooks({
+const withHooks = useHooks({
 	before: [logEvent(), parseEvent()],
 	after: [],
 	onError: [handleUnexpectedError()]
 })
 
-const  handler = async (event, context) => {
+const handler = async (event, context) => {
 	// your lambda function...
 }
 
-// call applyHooks passing in your lambda function
-exports.handler = applyHooks(handler)
+// call withHooks passing in your lambda function
+exports.handler = withHooks(handler)
 ```
 
 ## Install
@@ -61,19 +61,19 @@ const useHooks = require('lambda-hooks')
     Also, notice that we are invoking the hooks when they are passed in, this is deliberate and will make more sense when we get to a more complex example later.
 
 ```javascript
-const applyHooks = useHooks({
+const withHooks = useHooks({
     before: [logEvent(), parseEvent()],
     after: [],
     onError: [handleUnexpectedError()],
 })
 ```
 
-3. useHooks returns a function applyHooks. Pass your **async** lambda into the applyHooks function to decorate your lambda and then export as normal.
+3. useHooks returns a function withHooks. Pass your **async** lambda into the withHooks function to decorate your lambda and then export as normal.
 
 ```javascript
 const  handler = async (event, context) => {...}
 
-exports.handler = applyHooks(handler)
+exports.handler = withHooks(handler)
 ```
 
 ## What the hook? 👀
@@ -148,7 +148,7 @@ That's why we have a higher order function, the HookCreator. This is to pass in 
 But for this to work though, we need to remember to pass in the schema to the HookCreator when we invoke useHooks. Like so:
 
 ```javascript
-const applyHooks = useHooks({
+const withHooks = useHooks({
     before: [logEvent(), parseEvent(), validateEventBody({ schema })],
 })
 ```
