@@ -1,4 +1,4 @@
-import { HookCreator } from '../index'
+import { HookCreator } from '../types/hooks'
 
 export const handleScheduledEvent: HookCreator = () => async state => {
     const { event } = state
