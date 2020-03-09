@@ -1,4 +1,4 @@
-import { Context } from 'aws-lambda'
+import { Context } from 'aws-lambda';
 
 export {
     handleScheduledEvent,
@@ -83,7 +83,7 @@ export const useHooks: UseHooks = (hooks: Hooks): ApplyHooks => {
         } catch (error) {
             state.error = error
 
-            for (const hook of hooks.after!) {
+            for (const hook of hooks.onError!) {
                 state = await hook(state)
 
                 if (state.exit) return state.response

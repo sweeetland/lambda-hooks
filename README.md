@@ -161,5 +161,5 @@ Woah calm down, actually there are a few rules ☝️
 
 1. A hook must be a higher order function
 2. The returned function (HookHandler) must be async or return a promise
-3. The HookHandler excepts the state object as input and returns the state object
+3. The HookHandler accepts the state object as input and must return the state object
 4. Your lambda function must be async
