@@ -71,7 +71,7 @@ const withHooks = useHooks({
 3. useHooks returns a function withHooks. Pass your **async** lambda into the withHooks function to decorate your lambda and then export as normal.
 
 ```javascript
-const  handler = async (event, context) => {...}
+const handler = async (event, context) => {...}
 
 exports.handler = withHooks(handler)
 ```

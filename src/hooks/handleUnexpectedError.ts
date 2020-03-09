@@ -1,4 +1,4 @@
-import { HookCreator } from '../index'
+import { HookCreator } from '../types/hooks'
 
 export const handleUnexpectedError: HookCreator = () => async state => {
     const { error } = state

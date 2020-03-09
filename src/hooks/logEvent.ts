@@ -1,4 +1,4 @@
-import { HookCreator } from '../index'
+import { HookCreator } from '../types/hooks'
 
 export const logEvent: HookCreator = () => async state => {
     console.log(`received event: ${state.event}`)
