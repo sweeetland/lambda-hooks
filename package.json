@@ -9,9 +9,20 @@
     ],
     "scripts": {
         "test": "echo \"No test specified\"",
+        "lint": "./node_modules/.bin/eslint \"src/**\"",
         "release": "np",
         "build": "rm -rf dist && tsc",
         "prepare": "npm run build"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "tsc && lint-staged"
+        }
+    },
+    "lint-staged": {
+        "src/**/*.ts": [
+            "npm run lint"
+        ]
     },
     "keywords": [
         "lambda",
@@ -36,6 +47,8 @@
         "eslint": "^6.8.0",
         "eslint-config-prettier": "^6.10.0",
         "eslint-plugin-prettier": "^3.1.2",
+        "husky": "^4.2.3",
+        "lint-staged": "^10.0.8",
         "prettier": "^1.19.1",
         "typescript": "^3.8.3"
     }
