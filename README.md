@@ -10,6 +10,16 @@ Lambda Hooks help avoid repeated logic in your lambda functions. Use some of the
 -   Fast & simple to use 🛤
 -   First class support for TypeScript & ES7+ JavaScript 🤓
 
+## Motivation
+
+When working with AWS lambda functions, typically, there's some repeated actions that you need to do on every invocation. Things like logging the event, parsing the event body, schema validation, handling unexpected errors etc. It easy to end up with a lot of repeated but necessary code in your lambda functions.
+
+I wanted a **simple**, **easy to use** solution, with **minimal overhead** and good **TypeScript** support. Where I could define these actions once to share across all my related lambdas, keeping my lambdas for business logic only.
+
+I couldn't find a solution that I was happy with, hence the reason for this light package. It is early days yet, but it's being used in production, and I hope others find this helpful too.
+
+Todo: image showing diff without hooks vs with hooks
+
 ## Example
 
 ```javascript
@@ -44,21 +54,21 @@ or with yarn:
 yarn add lambda-hooks
 ```
 
-_TypeScript types are included_ 🧰
+_TypeScript types included_ 🧰
 
 ## Usage
 
-1. Require the package
+1 - Require the package
 
 ```javascript
 const { useHooks } = require('lambda-hooks')
 ```
 
-2. Call useHooks with the hooks that you want to use. There's 3 types of hooks that are executed either before the lambda execution, after or if an error occurs.
+2 - Call useHooks with the hooks that you want to use. There's 3 types of hooks that are executed either before the lambda execution, after or if an error occurs.
 
-    Note that the order of the hooks matters, they are executed one by one starting from the first hook in the before array, then your lambda function is invoked, then through all hooks in the after array. If at any point an error occurs, execution is directed towards the onError hooks array.
+Note that the order of the hooks matters, they are executed one by one starting from the first hook in the before array, then your lambda function is invoked, then through all hooks in the after array. If at any point an error occurs, execution is directed towards the onError hooks array.
 
-    Also, notice that we are invoking the hooks when they are passed in, this is deliberate and will make more sense when we get to a more complex example later.
+Also, notice that we are invoking the hooks when they are passed in, this is deliberate and will make more sense when we get to a more complex example later.
 
 ```javascript
 const withHooks = useHooks({
@@ -68,13 +78,17 @@ const withHooks = useHooks({
 })
 ```
 
-3. useHooks returns a function withHooks. Pass your **async** lambda into the withHooks function to decorate your lambda and then export as normal.
+3 - useHooks returns a function withHooks. Pass your **async** lambda into the withHooks function to decorate your lambda and then export as normal.
 
 ```javascript
 const  handler = async (event, context) => {...}
 
 exports.handler = withHooks(handler)
 ```
+
+### Flow of Execution
+
+Todo: Diagram showing the order of execution.
 
 ## What the hook? 👀
 
@@ -159,10 +173,11 @@ Woah calm down, actually there are a few rules ☝️
 
 ### Rules of Hooks
 
-1. A hook must be a higher order function
+1. To create a hook you need a function (HookCreator) that returns another function (HookHandler)
 2. The returned function (HookHandler) must be async or return a promise
 3. The HookHandler accepts the state object as input and must return the state object
-4. Your lambda function must be async
+4. Call the HookCreator as it is passed in to useHooks (in the hooks array)
+5. Your lambda function must be async
 
 ## Recommendations
 
@@ -196,7 +211,7 @@ const handler = async event => {...}
 export const lambda = withApiHooks(handler, { requestSchema: schema })
 ```
 
--   **Write your own hooks.** It's really easy to do. And, if you're migrating an existing project over, the logic will barely change. Just remember that to create a hook, create a function (HookCreator) that returns another function (HookHandler). The HookCreator takes an optional config object. The HookHandler takes the state as input and also returns the state. That is all you need to know!
+-   **Write your own hooks.** It's really easy to do. If you're migrating an existing project over, the logic will barely change. Just remember, create a function (HookCreator) that returns another function (HookHandler). The HookCreator takes an optional config object. The HookHandler takes the state as input and also returns the state. And, that is all you need to know!
 
     Feel free to share any hooks you make by submitting a PR 😉 and, here's a boilerplate hook (that does absolutely nothing) to get you started:
 
@@ -220,7 +235,6 @@ import { useHooks,
     handleUnexpectedError,
     logEvent,
     parseEvent,
-    validateEventBody,
 } from 'lambda-hooks'
 
 const handler = async (event: APIGatewayProxyEvent, context: Context) => {...}
@@ -253,7 +267,7 @@ type HookCreator<Config = {}> = (config?: Config) => HookHandler
 type HookHandler = (state: State) => Promise<State>
 ```
 
-Now let's get to a hook written in TypeScript. Often when using lambdas in production you'll want to keep some of them warm to avoid cold starts, but if you're doing this, remember to check and quit immediately otherwise you're wasting 💰. That's what this hook does...
+Now let's get to an example of a hook written in TypeScript. Often when using lambdas in production you'll want to keep some of them warm to avoid cold starts, but if you're doing this, remember to check and quit immediately otherwise you're wasting 💰. That's what this hook does...
 
 ```typescript
 import { HookCreator } from 'lambda-hooks'
@@ -269,3 +283,9 @@ export const handleScheduledEvent: HookCreator = () => async state => {
     return state
 }
 ```
+
+## Related
+
+-   [**middy**](https://github.com/middyjs/middy) - A special mention needs to go out to the folks at Middy. This project has been heavily inspired by them and aims to solve the same problem.
+-   [**lambda-api**](https://github.com/jeremydaly/lambda-api) - Another cool framework that brings the familiar syntax of frameworks like express & fastify but specifically designed for AWS lambda.
+-   [**production-ready-serverless**](https://github.com/sweeetland/production-ready-serverless) - a boilerplate starter project complete with Serverless, TypeScript, lambda-hooks & more...
