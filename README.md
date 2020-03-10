@@ -19,9 +19,9 @@ I wanted a **simple**, **easy to use** solution, with **minimal overhead** and g
 
 I couldn't find a solution that I was happy with, hence the reason for this light package. It is early days yet, but it's being used in production, and I hope others find this helpful too.
 
-Here's a before and after screenshot...
+Here's a real before and after screenshot...
 
-![a before and after screenshot showing the difference between using & not using hooks](https://raw.githubusercontent.com/sweeetland/lambda-hooks/master/assets/beforeAndAfter.png)
+![a before and after screenshot of code without hooks vs withHooks](https://raw.githubusercontent.com/sweeetland/lambda-hooks/master/assets/beforeAndAfter.png)
 
 ## Example
 
@@ -90,7 +90,7 @@ exports.handler = withHooks(handler)
 ```
 
 ### Flow of Execution
-
+This is a visual of the order in which the hooks are executed. One by one from the before array, to the lambda and then to the after array, only reaching the onError if there's an error at any point. 
 ```javascript
 const withHooks = useHooks({
 
