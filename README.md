@@ -198,7 +198,7 @@ export const lambda = withApiHooks(handler, { requestSchema: schema })
 
 -   **Write your own hooks.** It's really easy to do. And, if you're migrating an existing project over, the logic will barely change. Just remember that to create a hook, you need a function (HookCreator) that returns another function (HookHandler). The HookCreator takes an optional config object. The HookHandler takes the state as input and also returns the state. That is all you need to know!
 
-        	Feel free to share any hooks you make by submitting a PR 😉and, here's a boilerplate hook (that does absolutely nothing) to get you started:
+    Feel free to share any hooks you make by submitting a PR 😉 and, here's a boilerplate hook (that does absolutely nothing) to get you started:
 
 ```javascript
 export const myNewHook = () => async state => {
