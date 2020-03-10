@@ -6,9 +6,9 @@ Lambda Hooks help avoid repeated logic in your lambda functions. Use some of the
 
 ## Principles
 
--   Zero dependancies
--   Fast & simple to use
--   First class support for TypeScript & modern JavaScript
+-   Zero dependancies 🚫
+-   Fast & simple to use 🛤
+-   First class support for TypeScript & ES7+ JavaScript 🤓
 
 ## Example
 
@@ -48,15 +48,15 @@ _TypeScript types are included_ 🧰
 
 ## Usage
 
-1. Import/require the package
+1. Require the package
 
 ```javascript
-const useHooks = require('lambda-hooks')
+const { useHooks } = require('lambda-hooks')
 ```
 
 2. Call useHooks with the hooks that you want to use. There's 3 types of hooks that are executed either before the lambda execution, after or if an error occurs.
 
-    Note that the order of the hooks matters, they are executed one by one from the first hook in the before array.
+    Note that the order of the hooks matters, they are executed one by one starting from the first hook in the before array, then your lambda function is invoked, then through all hooks in the after array. If at any point an error occurs, execution is directed towards the onError hooks array.
 
     Also, notice that we are invoking the hooks when they are passed in, this is deliberate and will make more sense when we get to a more complex example later.
 
@@ -163,3 +163,109 @@ Woah calm down, actually there are a few rules ☝️
 2. The returned function (HookHandler) must be async or return a promise
 3. The HookHandler accepts the state object as input and must return the state object
 4. Your lambda function must be async
+
+## Recommendations
+
+> _"with great power, comes great responsibility"_ - someone, somewhere
+
+Here's a few recommendations that might make your life easier.
+
+-   **Export the withHooks function to share across related lambdas.** For example, all your API lambdas might utilise the same hooks, but, your DynamoDB stream lambdas might need to utilise a different set of hooks. Rather than repeating the useHooks call for each lambda, call once and share around the related lambdas...
+
+```javascript
+// file: src/hooks/api.js
+export const withApiHooks = (lambda, { requestSchema } = {}) =>
+    useHooks({
+        before: [
+            handleScheduledEvent(),
+            logEvent(),
+            parseEvent(),
+            validateEventBody({ requestSchema }),
+        ],
+        onError: [handleUnexpectedError()],
+    })(lambda))
+
+
+// file: src/api/lambda.js
+const { withApiHooks } = require('../hooks/api')
+
+...
+
+const handler = async event => {...}
+
+export const lambda = withApiHooks(handler, { requestSchema: schema })
+```
+
+-   **Write your own hooks.** It's really easy to do. And, if you're migrating an existing project over, the logic will barely change. Just remember that to create a hook, you need a function (HookCreator) that returns another function (HookHandler). The HookCreator takes an optional config object. The HookHandler takes the state as input and also returns the state. That is all you need to know!
+
+        	Feel free to share any hooks you make by submitting a PR 😉and, here's a boilerplate hook (that does absolutely nothing) to get you started:
+
+```javascript
+export const myNewHook = () => async state => {
+    const { event, context } = state
+
+    // your custom hook logic here....
+
+    return state
+}
+```
+
+-   **Use TypeScript.** I bet some of you JS folk are sick of hearing about it. But, once you get over the hump, it makes coding a lot more enjoyable, honestly. Speaking of which...
+
+## TypeScript 🙌
+
+```typescript
+import { useHooks,
+    handleScheduledEvent,
+    handleUnexpectedError,
+    logEvent,
+    parseEvent,
+    validateEventBody,
+} from 'lambda-hooks'
+
+const handler = async (event: APIGatewayProxyEvent, context: Context) => {...}
+
+export const lambda = useHooks({
+        before: [
+            handleScheduledEvent(),
+            logEvent(),
+            parseEvent(),
+        ],
+        onError: [handleUnexpectedError()],
+    })(handler)
+```
+
+Here's some types for more clarity on the explanations above. Note, you don't need to copy & paste these, this is just for comprehension, any types you need can be imported from the package.
+
+```typescript
+interface Hooks {
+    before?: HookHandler[]
+    after?: HookHandler[]
+    onError?: HookHandler[]
+}
+
+type UseHooks = (hooks: Hooks) => WithHooks
+
+type WithHooks = (lambda: any) => (event: any, context: Context) => Promise<any>
+
+type HookCreator<Config = {}> = (config?: Config) => HookHandler
+
+type HookHandler = (state: State) => Promise<State>
+```
+
+Now let's get to an example of a hook written in TypeScript. Often when building with lambdas you'll want to keep some of your lambdas warm to avoid cold starts, but if you're doing this, remember to check and quit immediately otherwise you're wasting 💰. That's what this hook does...
+
+```typescript
+import { HookCreator } from 'lambda-hooks'
+
+export const handleScheduledEvent: HookCreator = () => async state => {
+    const { event } = state
+
+    if (event['detail-type'] === 'Scheduled Event') {
+        state.exit = true
+        state.response = { statusCode: 200 }
+    }
+
+    return state
+}
+```
