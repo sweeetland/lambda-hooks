@@ -19,7 +19,9 @@ I wanted a **simple**, **easy to use** solution, with **minimal overhead** and g
 
 I couldn't find a solution that I was happy with, hence the reason for this light package. It is early days yet, but it's being used in production, and I hope others find this helpful too.
 
-Todo: image showing diff without hooks vs with hooks
+Here's a before and after screenshot...
+
+![a before and after screenshot showing the difference between using & not using hooks](https://raw.githubusercontent.com/sweeetland/lambda-hooks/master/assets/beforeAndAfter.png)
 
 ## Example
 
@@ -98,10 +100,10 @@ const withHooks = useHooks({
 // lambda function is invoked here...
 
   after: [thirdHook()],
-//            end -->|
+//          Finish -->|
 
   onError: [fourthHook()]
-//      end if error -->|
+//  Finish if errors -->|
 
 })
 ```
