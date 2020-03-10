@@ -1,3 +1,4 @@
+
 # lambda-hooks ⚓️
 
 **Super lightweight module to _hook_ into the execution of your Node.js lambda functions**
@@ -88,7 +89,22 @@ exports.handler = withHooks(handler)
 
 ### Flow of Execution
 
-Todo: Diagram showing the order of execution.
+```javascript
+const withHooks = useHooks({
+
+// start -->
+  before: [firstHook(), secondHook()],
+
+// lambda function is invoked here...
+
+  after: [thirdHook()],
+//            end -->|
+
+  onError: [fourthHook()]
+//      end if error -->|
+
+})
+```
 
 ## What the hook? 👀
 
