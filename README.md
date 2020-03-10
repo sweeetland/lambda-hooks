@@ -13,7 +13,7 @@ Lambda Hooks help avoid repeated logic in your lambda functions. Use some of the
 
 ## Motivation
 
-When working with AWS lambda functions, typically, there's some repeated actions that you need to do on every invocation. Things like logging the event, parsing the event body, schema validation, handling unexpected errors etc. It easy to end up with a lot of repeated but necessary code in your lambda functions.
+When working with AWS lambda functions, typically, there's some frequent actions that you need to do on every invocation. Things like logging the event, parsing the event body, schema validation, handling unexpected errors etc. It's easy to end up with a lot of *repeated* but *necessary* code in your lambda functions.
 
 I wanted a **simple**, **easy to use** solution, with **minimal overhead** and good **TypeScript** support. Where I could define these actions once to share across all my related lambdas, keeping my lambdas for business logic only.
 
