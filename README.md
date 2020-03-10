@@ -90,7 +90,7 @@ exports.handler = withHooks(handler)
 ```
 
 ### Flow of Execution
-This is a visual of the order in which the hooks are executed. One by one from the before array, to the lambda and then to the after array, only reaching the onError if there's an error at any point. 
+This is a visual of the order in which the hooks are executed. One by one from the before array, to the lambda and then to the after array, only reaching the onError array *if* there's an error. 
 ```javascript
 const withHooks = useHooks({
 
