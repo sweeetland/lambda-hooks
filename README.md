@@ -196,7 +196,7 @@ const handler = async event => {...}
 export const lambda = withApiHooks(handler, { requestSchema: schema })
 ```
 
--   **Write your own hooks.** It's really easy to do. And, if you're migrating an existing project over, the logic will barely change. Just remember that to create a hook, you need a function (HookCreator) that returns another function (HookHandler). The HookCreator takes an optional config object. The HookHandler takes the state as input and also returns the state. That is all you need to know!
+-   **Write your own hooks.** It's really easy to do. And, if you're migrating an existing project over, the logic will barely change. Just remember that to create a hook, create a function (HookCreator) that returns another function (HookHandler). The HookCreator takes an optional config object. The HookHandler takes the state as input and also returns the state. That is all you need to know!
 
     Feel free to share any hooks you make by submitting a PR 😉 and, here's a boilerplate hook (that does absolutely nothing) to get you started:
 
@@ -204,13 +204,13 @@ export const lambda = withApiHooks(handler, { requestSchema: schema })
 export const myNewHook = () => async state => {
     const { event, context } = state
 
-    // your custom hook logic here....
+    // your logic here....
 
     return state
 }
 ```
 
--   **Use TypeScript.** I bet some of you JS folk are sick of hearing about it. But, once you get over the hump, it makes coding a lot more enjoyable, honestly. Speaking of which...
+-   **Use TypeScript.** Speaking of which...
 
 ## TypeScript 🙌
 
@@ -253,7 +253,7 @@ type HookCreator<Config = {}> = (config?: Config) => HookHandler
 type HookHandler = (state: State) => Promise<State>
 ```
 
-Now let's get to an example of a hook written in TypeScript. Often when building with lambdas you'll want to keep some of your lambdas warm to avoid cold starts, but if you're doing this, remember to check and quit immediately otherwise you're wasting 💰. That's what this hook does...
+Now let's get to a hook written in TypeScript. Often when using lambdas in production you'll want to keep some of them warm to avoid cold starts, but if you're doing this, remember to check and quit immediately otherwise you're wasting 💰. That's what this hook does...
 
 ```typescript
 import { HookCreator } from 'lambda-hooks'
