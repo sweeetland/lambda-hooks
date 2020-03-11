@@ -1,4 +1,3 @@
-
 # lambda-hooks ⚓️
 
 **Super lightweight module to _hook_ into the execution of your Node.js lambda functions**
@@ -13,30 +12,30 @@ Lambda Hooks help avoid repeated logic in your lambda functions. Use some of the
 
 ## Motivation
 
-When working with AWS lambda functions, typically, there's some frequent actions that you need to do on every invocation. Things like logging the event, parsing the event body, schema validation, handling unexpected errors etc. It's easy to end up with a lot of *repeated* but *necessary* code in your lambda functions.
+When working with AWS lambda functions, typically, there's some frequent actions that you need to do on every invocation. Things like logging the event, parsing the event body, schema validation, handling unexpected errors etc. It's easy to end up with a lot of _repeated yet necessary_ code in your lambda functions.
 
 I wanted a **simple**, **easy to use** solution, with **minimal overhead** and good **TypeScript** support. Where I could define these actions once to share across all my related lambdas, keeping my lambdas for business logic only.
 
 I couldn't find a solution that I was happy with, hence the reason for this light package. It is early days yet, but it's being used in production, and I hope others find this helpful too.
 
-Here's a real before and after screenshot...
+Here's a before and after screenshot...
 
 ![a before and after screenshot of code without hooks vs withHooks](https://raw.githubusercontent.com/sweeetland/lambda-hooks/master/assets/beforeAndAfter.png)
 
 ## Example
 
 ```javascript
-const useHooks, {logEvent, parseEvent, handleUnexpectedError} = require('lambda-hooks')
+const { useHooks, logEvent, parseEvent, handleUnexpectedError } = require('lambda-hooks')
 
 // call useHooks with hooks to decorate your lambda with
 const withHooks = useHooks({
-	before: [logEvent(), parseEvent()],
-	after: [],
-	onError: [handleUnexpectedError()]
+    before: [logEvent(), parseEvent()],
+    after: [],
+    onError: [handleUnexpectedError()],
 })
 
 const handler = async (event, context) => {
-	// your lambda function...
+    // your lambda function...
 }
 
 // call withHooks passing in your lambda function
@@ -90,21 +89,21 @@ exports.handler = withHooks(handler)
 ```
 
 ### Flow of Execution
-This is a visual of the order in which the hooks are executed. One by one from the before array, to the lambda and then to the after array, only reaching the onError array *if* there's an error. 
+
+This is a visual of the order in which the hooks are executed. One by one from the before array, to the lambda and then to the after array, only reaching the onError array _if_ there's an error.
+
 ```javascript
 const withHooks = useHooks({
+    // start -->
+    before: [firstHook(), secondHook()],
 
-// start -->
-  before: [firstHook(), secondHook()],
+    // lambda function is invoked now...
 
-// lambda function is invoked here...
+    after: [thirdHook()],
+    //        Finish -->|
 
-  after: [thirdHook()],
-//          Finish -->|
-
-  onError: [fourthHook()]
-//  Finish if errors -->|
-
+    onError: [fourthHook()],
+    // Finish if errors -->|
 })
 ```
 
@@ -122,7 +121,7 @@ export const logEvent = () => async state => {
 
 Notice that we have a function that returns a function, a higher order function. The parent function is the HookCreator and the returned function is the HookHandler. We'll get to why later.
 
-For now, let's focus on the returned function the HookHandler. This function **receives and returns** a state object that looks like this:
+For now, let's focus on the returned function the HookHandler. This function **receives and must returns** the state object that looks like this:
 
 ```typescript
 interface State {
