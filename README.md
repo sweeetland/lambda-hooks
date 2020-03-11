@@ -6,7 +6,7 @@ Lambda Hooks help avoid repeated logic in your lambda functions. Use some of the
 
 ## Principles
 
--   Zero dependancies
+-   Zero dependencies
 -   Fast & simple to use
 -   First class support for TypeScript & ES7+ JavaScript
 
