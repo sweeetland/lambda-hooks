@@ -1,4 +1,4 @@
-# lambda-hooks ⚓️
+# lambda-hooks
 
 **Super lightweight module to _hook_ into the execution of your Node.js lambda functions**
 
@@ -6,9 +6,9 @@ Lambda Hooks help avoid repeated logic in your lambda functions. Use some of the
 
 ## Principles
 
--   Zero dependancies 🚫
--   Fast & simple to use 🛤
--   First class support for TypeScript & ES7+ JavaScript 🤓
+-   Zero dependancies
+-   Fast & simple to use
+-   First class support for TypeScript & ES7+ JavaScript
 
 ## Motivation
 
@@ -230,7 +230,7 @@ export const lambda = withApiHooks(handler, { requestSchema: schema })
 
 -   **Write your own hooks.** It's really easy to do. If you're migrating an existing project over, the logic will barely change. Just remember, create a function (HookCreator) that returns another function (HookHandler). The HookCreator takes an optional config object. The HookHandler takes the state as input and also returns the state. And, that is all you need to know!
 
-    Feel free to share any hooks you make by submitting a PR 😉 and, here's a boilerplate hook (that does absolutely nothing) to get you started:
+    Feel free to share any hooks you make by submitting a PR, and here's a boilerplate hook (that does absolutely nothing) to get you started:
 
 ```javascript
 export const myNewHook = () => async state => {
