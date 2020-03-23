@@ -43,13 +43,7 @@
         "AWS Lambda",
         "API Gateway",
         "DynamoDB",
-        "s3",
-        "SQS",
-        "streams",
-        "web framework",
-        "serverless library",
-        "json",
-        "schema"
+        "serverless library"
     ],
     "author": "James Sweetland",
     "license": "MIT",
@@ -60,7 +54,6 @@
     "devDependencies": {
         "@types/aws-lambda": "^8.10.46",
         "@types/node": "^13.9.0",
-        "@types/yup": "^0.26.32",
         "@typescript-eslint/eslint-plugin": "^2.22.0",
         "@typescript-eslint/parser": "^2.22.0",
         "aws-lambda": "^1.0.5",
