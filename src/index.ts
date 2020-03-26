@@ -3,10 +3,12 @@ import { Context } from 'aws-lambda'
 export { handleScheduledEvent, handleUnexpectedError, logEvent, parseEvent } from './hooks'
 
 interface Hooks {
-    before?: HookHandler[]
-    after?: HookHandler[]
-    onError?: HookHandler[]
+    before?: Hook[]
+    after?: Hook[]
+    onError?: Hook[]
 }
+
+type Obj = { [k: string]: any }
 
 type Response = any
 type Event = any
@@ -17,26 +19,22 @@ interface State {
     exit: boolean
     response?: Response
     error?: Error
+    config: any
 }
 
-/**
- * @param config optional configuration object for this hook
- * @returns HookHandler
- */
-export type HookCreator = (config?: any) => HookHandler
 /**
  * @param state a state object that might be manipulated by this function
  * @param state.event event passed in from AWS
  * @param state.context context passed in from AWS
  * @param state.exit defaults to false, if set to true program will exit early after ivocation of this hook
  * @param state.response returned when state.exit is set to true
- * @param state.error exists only if there's an unhandled exception thrown inside a hook or the lambda
+ * @param state.error exists only if there's an unhandled exception thrown inside a hook or the lambda handler
  * @returns Promise<state>
  */
-type HookHandler = (state: State) => Promise<State>
+export type Hook = (state: State) => Promise<State>
 
-type UseHooks = (hooks: Hooks) => WithHooks
-type WithHooks = (lambda: any) => (event: any, context: Context) => Promise<any>
+type UseHooks = (hooks: Hooks, config?: Obj) => WithHooks
+type WithHooks = (handler: any) => (event: any, context: Context) => Promise<any>
 /**
  * Using the provided hooks create an withHooks higher order function
  * @param hooks a config object of the hooks to apply to your lambda
@@ -45,7 +43,7 @@ type WithHooks = (lambda: any) => (event: any, context: Context) => Promise<any>
  * @param hooks.onError an array of hooks to run only if there's an error during the execution
  * @returns WithHooks() function that wraps around your lambda
  */
-export const useHooks: UseHooks = (hooks: Hooks): WithHooks => {
+export const useHooks: UseHooks = (hooks: Hooks, config: Obj = {}): WithHooks => {
     if (!hooks.before) hooks.before = []
     if (!hooks.after) hooks.after = []
     if (!hooks.onError) hooks.onError = []
@@ -53,11 +51,11 @@ export const useHooks: UseHooks = (hooks: Hooks): WithHooks => {
     /**
      * Higher order function that takes a lambda function
      * as input and applies the hooks provided to useHooks()
-     * @param lambda lambda function
+     * @param handler lambda function
      * @returns supercharged lambda  🚀
      */
-    const withHooks = (lambda: any) => async (event: Event, context: Context) => {
-        let state: State = { event, context, exit: false }
+    const withHooks = (handler: any) => async (event: Event, context: Context) => {
+        let state: State = { event, context, exit: false, config }
 
         try {
             for (const hook of hooks.before!) {
@@ -66,7 +64,7 @@ export const useHooks: UseHooks = (hooks: Hooks): WithHooks => {
                 if (state.exit) return state.response
             }
 
-            state.response = await lambda(state.event, state.context)
+            state.response = await handler(state.event, state.context)
             if (hooks?.after?.length === 0) return state.response
 
             for (const hook of hooks.after!) {

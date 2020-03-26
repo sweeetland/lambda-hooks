@@ -29,9 +29,9 @@ const { useHooks, logEvent, parseEvent, handleUnexpectedError } = require('lambd
 
 // call useHooks with hooks to decorate your lambda with
 const withHooks = useHooks({
-    before: [logEvent(), parseEvent()],
+    before: [logEvent, parseEvent],
     after: [],
-    onError: [handleUnexpectedError()],
+    onError: [handleUnexpectedError],
 })
 
 const handler = async (event, context) => {
@@ -70,13 +70,11 @@ const { useHooks } = require('lambda-hooks')
 
 Note that the order of the hooks matters, they are executed one by one starting from the first hook in the before array, then your lambda function is invoked, then through all hooks in the after array. If at any point an error occurs, execution is directed towards the onError hooks array.
 
-Also, notice that we are invoking the hooks when they are passed in, this is deliberate and will make more sense when we get to a more complex example later.
-
 ```javascript
 const withHooks = useHooks({
-    before: [logEvent(), parseEvent()],
+    before: [logEvent, parseEvent],
     after: [],
-    onError: [handleUnexpectedError()],
+    onError: [handleUnexpectedError],
 })
 ```
 
@@ -95,33 +93,31 @@ This is a visual of the order in which the hooks are executed. One by one from t
 ```javascript
 const withHooks = useHooks({
     // start -->
-    before: [firstHook(), secondHook()],
+    before: [firstHook, secondHook],
 
     // lambda function is invoked now...
 
-    after: [thirdHook()],
+    after: [thirdHook],
     //        Finish -->|
 
-    onError: [fourthHook()],
+    onError: [fourthHook],
     // Finish if errors -->|
 })
 ```
 
 ## What the hook? 👀
 
-I'm glad you asked, let's start with a simple example of a hook that logs the event
+I'm glad you asked, let's start with a simple example of a hook that logs the aws lambda event to the console
 
 ```javascript
-export const logEvent = () => async state => {
+export const logEvent = async state => {
     console.log(`received event: ${state.event}`)
 
     return state
 }
 ```
 
-Notice that we have a function that returns a function, a higher order function. The parent function is the HookCreator and the returned function is the HookHandler. We'll get to why later.
-
-For now, let's focus on the returned function the HookHandler. This function **receives and must returns** the state object that looks like this:
+Yes it really is that easy... A Hook is just a function that **receives and returns** the state object that looks like this:
 
 ```typescript
 interface State {
@@ -130,13 +126,14 @@ interface State {
     exit: boolean // Set to true to quit execution early
     response?: Response // This will contain the response from your lambda after it has been executed. Also this will be returned when exit is true
     error?: Error // If there's an unhandled exception, it will be attached here & your onError handlers will be invoked
+    config: any // Config object to provide extra things to your hooks at the point of execution e.g. you might want to pass a logger into logEvent
 }
 ```
 
 You can write hooks to manipulate the event before it reaches your lambda function. For example, when writing lambdas that sit behind an API often you need to parse the event body. Let's do exactly that:
 
 ```javascript
-export const parseEventBody = () => async state => {
+export const parseEventBody = async state => {
     const { event } = state
 
     if (typeof event.body === 'string') {
@@ -150,7 +147,9 @@ export const parseEventBody = () => async state => {
 Ok you get the gist, now it's time for a more complex example. Again, when creating lambdas that sit behind a rest API, it's a good idea to validate the event body (assuming this hasn't already been done by API gateway). Like so:
 
 ```javascript
-export const validateEventBody = ({ schema }) => async state => {
+export const validateEventBody = async state => {
+    const { schema } = state.config
+
     if (!schema) {
         throw Error('missing required schema for validation')
     }
@@ -160,9 +159,9 @@ export const validateEventBody = ({ schema }) => async state => {
 
         await schema.validate(event.body, { strict: true })
 
-        console.log(`yup body passed validation: ${event.body}`)
+        console.log(`yup event.body passed validation: ${event.body}`)
     } catch (error) {
-        console.log(`yup error validating body: ${error}`)
+        console.log(`yup error validating event.body: ${error}`)
 
         state.exit = true
         state.response = { statusCode: 400, body: JSON.stringify({ error: error.message }) }
@@ -174,14 +173,17 @@ export const validateEventBody = ({ schema }) => async state => {
 
 Here we are utilising a library called yup for validation. Usually validation libraries need a schema to validate against, but how do we have access to the schema from inside the hook at the point of execution?
 
-That's why we have a higher order function, the HookCreator. This is to pass in anything that the hooks need that isn't already on the state object. See in this example we pass in the request schema to the HookCreator. This means that at the point of execution, we now have access to the schema in the HookHandler.
+Well the useHooks function accepts a optional second argument which is a configuration object. In here you can pass in anything you might need from within your hooks. In this hook, we are expecting a schema to be attached to the config object so we now have access to the schema from inside the Hook, at the point of execution. Another example could be when using the logEvent hook, you might want to pass in a logger rather than using console.log.
 
-But for this to work though, we need to remember to pass in the schema to the HookCreator when we invoke useHooks. Like so:
+But for this to work though, we need to remember to pass in the schema to the useHooks. Like so:
 
 ```javascript
-const withHooks = useHooks({
-    before: [logEvent(), parseEvent(), validateEventBody({ schema })],
-})
+const withHooks = useHooks(
+    {
+        before: [logEvent, parseEvent, validateEventBody],
+    },
+    { schema }
+)
 ```
 
 As you can see, when creating hooks like this, the possibilities are endless. You just have to use your imagination... 🧠
@@ -190,11 +192,9 @@ Woah calm down, actually there are a few rules ☝️
 
 ### Rules of Hooks
 
-1. To create a hook you need a function (HookCreator) that returns another function (HookHandler)
-2. The returned function (HookHandler) must be async or return a promise
-3. The HookHandler accepts the state object as input and must return the state object
-4. Call the HookCreator as it is passed in to useHooks (in the hooks array)
-5. Your lambda function must be async
+1. A hook is a function that must recieve and return the state object
+2. Call useHooks with the hooks object and a config object provide additional configuration to those hooks
+3. Your lambda function must be async
 
 ## Recommendations
 
@@ -206,16 +206,16 @@ Here's a few recommendations that might make your life easier.
 
 ```javascript
 // file: src/hooks/api.js
-export const withApiHooks = (lambda, { requestSchema } = {}) =>
+export const withApiHooks = (lambda, { schema }) =>
     useHooks({
         before: [
-            handleScheduledEvent(),
-            logEvent(),
-            parseEvent(),
-            validateEventBody({ requestSchema }),
+            handleScheduledEvent,
+            logEvent,
+            parseEvent,
+            validateEventBody,
         ],
-        onError: [handleUnexpectedError()],
-    })(lambda))
+        onError: [handleUnexpectedError],
+    }, { schema })(lambda))
 
 
 // file: src/api/lambda.js
@@ -223,18 +223,18 @@ const { withApiHooks } = require('../hooks/api')
 
 ...
 
-const handler = async event => {...}
+const main = async event => {...}
 
-export const lambda = withApiHooks(handler, { requestSchema: schema })
+export const handler = withApiHooks(main, { schema })
 ```
 
--   **Write your own hooks.** It's really easy to do. If you're migrating an existing project over, the logic will barely change. Just remember, create a function (HookCreator) that returns another function (HookHandler). The HookCreator takes an optional config object. The HookHandler takes the state as input and also returns the state. And, that is all you need to know!
+-   **Write your own hooks.** It's really easy to do. If you're migrating an existing project over, you already have the logic. So all you would need to do is wrap that logic in a function which recieves and returns the state object.
 
     Feel free to share any hooks you make by submitting a PR, and here's a boilerplate hook (that does absolutely nothing) to get you started:
 
 ```javascript
-export const myNewHook = () => async state => {
-    const { event, context } = state
+export const myNewHook = async state => {
+    const { event, context, config } = state
 
     // your logic here....
 
@@ -247,6 +247,7 @@ export const myNewHook = () => async state => {
 ## TypeScript 🙌
 
 ```typescript
+import { APIGatewayProxyEvent } from 'better-lambda-types'
 import { useHooks,
     handleScheduledEvent,
     handleUnexpectedError,
@@ -254,16 +255,18 @@ import { useHooks,
     parseEvent,
 } from 'lambda-hooks'
 
-const handler = async (event: APIGatewayProxyEvent, context: Context) => {...}
+...
 
-export const lambda = useHooks({
+const main = async (event: APIGatewayProxyEvent<Body>, context: Context) => {...}
+
+export const handler = useHooks({
         before: [
-            handleScheduledEvent(),
-            logEvent(),
-            parseEvent(),
+            handleScheduledEvent,
+            logEvent,
+            parseEvent,
         ],
-        onError: [handleUnexpectedError()],
-    })(handler)
+        onError: [handleUnexpectedError],
+    })(main)
 ```
 
 Here's some types for more clarity on the explanations above. Note, you don't need to copy & paste these, this is just for comprehension, any types you need can be imported from the package.
@@ -275,13 +278,11 @@ interface Hooks {
     onError?: HookHandler[]
 }
 
-type UseHooks = (hooks: Hooks) => WithHooks
+export type Hook = (state: State) => Promise<State>
+
+type UseHooks = (hooks: Hooks, config?: Obj) => WithHooks
 
 type WithHooks = (lambda: any) => (event: any, context: Context) => Promise<any>
-
-type HookCreator = (config?: any) => HookHandler
-
-type HookHandler = (state: State) => Promise<State>
 ```
 
 Now let's get to an example of a hook written in TypeScript. Often when using lambdas in production you'll want to keep some of them warm to avoid cold starts, but if you're doing this, remember to check and quit immediately otherwise you're wasting 💰. That's what this hook does...
@@ -289,7 +290,7 @@ Now let's get to an example of a hook written in TypeScript. Often when using la
 ```typescript
 import { HookCreator } from 'lambda-hooks'
 
-export const handleScheduledEvent: HookCreator = () => async state => {
+export const handleScheduledEvent: Hook = async state => {
     const { event } = state
 
     if (event['detail-type'] === 'Scheduled Event') {
@@ -303,6 +304,6 @@ export const handleScheduledEvent: HookCreator = () => async state => {
 
 ## Related
 
--   [**middy**](https://github.com/middyjs/middy) - A special mention needs to go out to the folks at Middy. This project has been heavily inspired by them and aims to solve the same problem.
--   [**lambda-api**](https://github.com/jeremydaly/lambda-api) - Another cool framework that brings the familiar syntax of frameworks like express & fastify but specifically designed for AWS lambda.
+-   [**middy**](https://github.com/middyjs/middy) - A special mention needs to go out to the folks at Middy. This project has been heavily inspired by them and solves the same problem.
+-   [**lambda-api**](https://github.com/jeremydaly/lambda-api) - Another really cool framework that brings the familiar syntax of frameworks like express & fastify but specifically designed for AWS lambda.
 -   [**production-ready-serverless**](https://github.com/sweeetland/production-ready-serverless) - a boilerplate starter project complete with Serverless, TypeScript, lambda-hooks & more...

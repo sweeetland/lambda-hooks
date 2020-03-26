@@ -1,11 +1,7 @@
-import { HookCreator } from '../index'
+import { Hook } from '../index'
 
-interface HookOptions {
-    logger: any
-}
-
-export const logEvent: HookCreator = ({ logger }: HookOptions) => async state => {
-    const log = logger || console.log
+export const logEvent: Hook = async state => {
+    const log = state.config.logger || console.log
 
     log(`received event: ${JSON.stringify(state.event, null, 4)}`)
 

@@ -1,6 +1,6 @@
-import { HookCreator } from '../index'
+import { Hook } from '../index'
 
-export const parseEvent: HookCreator = () => async state => {
+export const parseEvent: Hook = async state => {
     const { event } = state
     const { body, pathParameters, queryStringParameters, multiValueQueryStringParameters } = event
 
