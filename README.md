@@ -279,7 +279,7 @@ type UseHooks = (hooks: Hooks) => WithHooks
 
 type WithHooks = (lambda: any) => (event: any, context: Context) => Promise<any>
 
-type HookCreator<Config = {}> = (config?: Config) => HookHandler
+type HookCreator = (config?: any) => HookHandler
 
 type HookHandler = (state: State) => Promise<State>
 ```

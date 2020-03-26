@@ -23,7 +23,7 @@ interface State {
  * @param config optional configuration object for this hook
  * @returns HookHandler
  */
-export type HookCreator<Config = {}> = (config?: Config) => HookHandler
+export type HookCreator = (config?: any) => HookHandler
 /**
  * @param state a state object that might be manipulated by this function
  * @param state.event event passed in from AWS
