@@ -1,5 +1,3 @@
-import { Context } from 'aws-lambda'
-
 export { handleScheduledEvent, handleUnexpectedError, logEvent, parseEvent } from './hooks'
 
 interface Hooks {
@@ -11,11 +9,12 @@ interface Hooks {
 type Obj = { [k: string]: any }
 
 type Response = any
-type Event = any
+type AWSEvent = any
+type AWSContext = any
 
 interface State {
-    event: Event
-    context: Context
+    event: AWSEvent
+    context: AWSContext
     exit: boolean
     response?: Response
     error?: Error
@@ -34,7 +33,7 @@ interface State {
 export type Hook = (state: State) => Promise<State>
 
 type UseHooks = (hooks: Hooks, config?: Obj) => WithHooks
-type WithHooks = (handler: any) => (event: any, context: Context) => Promise<any>
+type WithHooks = (handler: any) => (event: any, context: AWSContext) => Promise<any>
 /**
  * Using the provided hooks create an withHooks higher order function
  * @param hooks a config object of the hooks to apply to your lambda
@@ -54,7 +53,7 @@ export const useHooks: UseHooks = (hooks: Hooks, config: Obj = {}): WithHooks =>
      * @param handler lambda function
      * @returns supercharged lambda  🚀
      */
-    const withHooks = (handler: any) => async (event: Event, context: Context) => {
+    const withHooks = (handler: any) => async (event: AWSEvent, context: AWSContext) => {
         let state: State = { event, context, exit: false, config }
 
         try {
