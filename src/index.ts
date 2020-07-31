@@ -17,7 +17,7 @@ export interface State {
     context: AWSContext
     exit: boolean
     response?: Response
-    error?: Error
+    error?: any
     config: any
 }
 
